@@ -42,5 +42,17 @@ namespace JWTSampleAPI.Controllers
 
             return Ok(JWT);
         }
+
+        [HttpGet("token/{JWT}")]
+        public IActionResult IsJWTValid(string JWT)
+        {
+            return Ok(mJWTHandler.ValidateToken(JWT));
+        }
+
+        [HttpGet("claims/token/{JWT}")]
+        public IActionResult GetClaims(string JWT)
+        {
+            return Ok(mJWTHandler.GetClaims(JWT));
+        }
     }
 }
