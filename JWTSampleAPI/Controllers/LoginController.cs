@@ -29,14 +29,16 @@ namespace JWTSampleAPI.Controllers
                 new Claim("Password", Pass)
             };
 
-            string JWT = mJWTHandler.GenerateJWT(new JWTHandlerConfiguration
-                        {
-                            Audience = "Your audience"
-                            ,
-                            Issuer = " Your Issuer"
-                            ,
-                            SecretKeySHA256 = "B221D9DBB083A7F33428D7C2A3C3198AE925614D70210E28716CCAA7CD4DDB79" // This is a random key in SHA-256
-                        },
+            JWTHandlerConfiguration configuration = new JWTHandlerConfiguration
+            {
+                Audience = "Your audience"
+                                        ,
+                Issuer = " Your Issuer"
+                                        ,
+                SecretKeySHA256 = "B221D9DBB083A7F33428D7C2A3C3198AE925614D70210E28716CCAA7CD4DDB79" // This is a random key in SHA-256
+            };
+
+            string JWT = mJWTHandler.GenerateJWT(configuration,
                         Claims
                         );
 
@@ -46,13 +48,29 @@ namespace JWTSampleAPI.Controllers
         [HttpGet("token/{JWT}")]
         public IActionResult IsJWTValid(string JWT)
         {
-            return Ok(mJWTHandler.ValidateToken(JWT));
+            JWTHandlerConfiguration configuration = new JWTHandlerConfiguration
+            {
+                Audience = "Your audience"
+                            ,
+                Issuer = " Your Issuer"
+                            ,
+                SecretKeySHA256 = "B221D9DBB083A7F33428D7C2A3C3198AE925614D70210E28716CCAA7CD4DDB79" // This is a random key in SHA-256
+            };
+            return Ok(mJWTHandler.ValidateToken(JWT, configuration));
         }
 
         [HttpGet("claims/token/{JWT}")]
         public IActionResult GetClaims(string JWT)
         {
-            return Ok(mJWTHandler.GetClaims(JWT));
+            JWTHandlerConfiguration configuration = new JWTHandlerConfiguration
+            {
+                Audience = "Your audience"
+                ,
+                Issuer = " Your Issuer"
+                ,
+                SecretKeySHA256 = "B221D9DBB083A7F33428D7C2A3C3198AE925614D70210E28716CCAA7CD4DDB79" // This is a random key in SHA-256
+            };
+            return Ok(mJWTHandler.GetClaims(JWT, configuration));
         }
     }
 }

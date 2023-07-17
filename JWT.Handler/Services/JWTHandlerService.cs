@@ -4,6 +4,8 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
+using System.Text.Json.Serialization;
+using System.Text.Json;
 
 namespace JWT.Handler.Services
 {
@@ -13,14 +15,12 @@ namespace JWT.Handler.Services
         private string mIssuer;
         private string mAudience;
 
-        public JWTHandlerService(){}
 
         public string GenerateJWT(JWTHandlerConfiguration Configuration, Claim[] Claims, double MinutesDuration = 60)
         {
             this.mAudience = Configuration.Audience;
             this.mIssuer = Configuration.Issuer;
             this.mSecretKeySHA256 = Configuration.SecretKeySHA256;
-
             SymmetricSecurityKey securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration.SecretKeySHA256));
             SigningCredentials credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
@@ -31,12 +31,12 @@ namespace JWT.Handler.Services
                     ,expires: DateTime.UtcNow.AddMinutes(MinutesDuration)
                     ,signingCredentials: credentials
                 );
-
+            
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
         
-        public ClaimsPrincipal? GetClaims(string JWT)
+        public IEnumerable<Claim>? GetClaims(string JWT, JWTHandlerConfiguration Configuration)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var validationParameters = new TokenValidationParameters
@@ -44,16 +44,16 @@ namespace JWT.Handler.Services
                 ValidateIssuer = true,
                 ValidateAudience = true,
                 ValidateIssuerSigningKey = true,
-                ValidIssuer = mIssuer,
-                ValidAudience = mAudience,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(mSecretKeySHA256))
+                ValidIssuer = Configuration.Issuer,
+                ValidAudience = Configuration.Audience,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration.SecretKeySHA256))
             };
 
             try
             {
                 SecurityToken validateToken;
-                return tokenHandler.ValidateToken(JWT, validationParameters, out validateToken);
-                
+                return tokenHandler.ValidateToken(JWT, validationParameters, out validateToken).Claims;
+
             }
             catch (Exception)
             {
@@ -63,11 +63,11 @@ namespace JWT.Handler.Services
         }
 
 
-        public bool ValidateToken(string JWT)
+        public bool ValidateToken(string JWT, JWTHandlerConfiguration Configuration)
         {
             try
             {
-                ClaimsPrincipal? claims = GetClaims(JWT);
+                IEnumerable<Claim>? claims = GetClaims(JWT, Configuration);
                 if (claims is null) return false;
                 return true;
             }
@@ -106,7 +106,7 @@ namespace JWT.Handler.Services
         /// <returns>
         /// The method returns a boolean value.
         /// </returns>
-        public bool ValidateToken(string JWT);
+        public bool ValidateToken(string JWT, JWTHandlerConfiguration Configuration);
         /// <summary>
         /// The function `GetClaims` takes a JWT (JSON Web Token) as input and returns a
         /// `ClaimsPrincipal` object if the token is valid, otherwise it returns null.
@@ -116,6 +116,6 @@ namespace JWT.Handler.Services
         /// <returns>
         /// The method is returning a ClaimsPrincipal object.
         /// </returns>
-        public ClaimsPrincipal? GetClaims(string JWT);
+        public IEnumerable<Claim>? GetClaims(string JWT, JWTHandlerConfiguration Configuration);
     }
 }
